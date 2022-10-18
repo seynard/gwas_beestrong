@@ -1,0 +1,10 @@
+library(data.table)
+args<-commandArgs(TRUE)
+dir_sonia<-args[1]
+#dir_sonia<-'work/GWAS/bam_BeeStrongMOSAR'
+d<-fread(paste0(dir_sonia,'/snp_kept.txt'),data.table=F)
+change<-fread(paste0(dir_sonia,'/triallelic_recode.txt'),data.table=F)
+d$id<-paste0(d[,1],'_',d[,2])
+change_id<-paste0(change[,1],'_',change[,2])
+d[,4][d$id%in%change_id]<-change[,4]
+write.table(d$ALT,paste0(dir_sonia,'/snp_kept_recode.txt'),row.names=F,col.names=T,quote=F)
