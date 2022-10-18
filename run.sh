@@ -55,7 +55,7 @@ sbatch -W --mem=200G --job-name='prep_pileup' --wrap="${script}/prep_pileup.sh $
 
 ##########################################################################
 #################### QUEEN GENETIC COMPOSITION AND GENOTYPE #################### 
-# queen composition (on markers SeqApiPop)
+# queen composition (on 50K markers)
 Ncol=$(awk "{print NF;exit}" ${dir_in}/depth.txt)
 colname=($(head -n1 ${dir_in}/depth.txt))
 col_non_bs=($(echo ${colname[@]//BS*/}))
