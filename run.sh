@@ -6,18 +6,16 @@ script="/work/genphyse/dynagen/seynard/GWAS/infestation4/scripts"
 dir_out="/work/genphyse/dynagen/seynard/GWAS/infestation4/results"
 dir_in="/work/genphyse/dynagen/seynard/GWAS/infestation4/data"
 dir_save="/genphyse/dynagen/BeeStrong"
-#dir_prior="/work/genphyse/dynagen/seynard/GWAS/BeeStrongHAV3_1/" 
 fasta=${dir_save}/Fasta/GCF_003254395.2_Amel_HAv3.1_genomic.fna
 vcf_name="MetaGenotypesCalled870_raw_snps"
 vcf_sansfiltre=${dir_in}/${vcf_name}.vcf.gz
 vcf_file=${dir_in}/${vcf_name}_allfilter.vcf 
-pop_id="Mellifera,Caucasica,Ligustica_Carnica"
+pop_id="Mellifera,Caucasia,Ligustica_Carnica"
 n_pop=$(echo $(IFS=","; set -f; set -- $pop_id; echo $#))
-pop_id2="Mellifera,Caucasica,Ligustica_Carnica,hybrid,Ligustica_nus"
+pop_id2="Mellifera,Caucasia,Ligustica_Carnica,hybrid"
 pheno="Data_BS.csv"
 pheno_mito='compareDepthsBeeVarroa.txt'
 snp50k='HAV3_1_50000.txt'
-#snpSeqApiPop='marker_seqapipop.txt'
 maf_min=0.01
 compo_threshold=0.8
 missing_rate=0.05
@@ -82,21 +80,13 @@ do
 	sleep 10m
 	x=$(squeue -u seynard | grep -Eow "$pat" |wc -l)
 done
-#job_run=($(squeue --noheader --format %i --name het))
-#job_n=$(echo ${#job_run[@]})
-#while [ ${job_n} -gt 1 ]
-#do
-#  	wait 10m
-#  	job_run=($(squeue --noheader --format %i --name het))
-#  	job_n=$(echo ${#job_run[@]})
-#done
 rm ${dir_in}/tmp* ${dir_in}/*_st_het.geno.bz2
 mkdir -p ${dir_in}/input
 mv ${dir_in}/sim_depth_count*.txt ${dir_in}/input/
 bzip2 ${dir_in}/input/*
 
 # group of homogeneous genetic composition
-choice='_50k' # or choice=''
+choice='_50k' 
 sbatch -W --wrap="Rscript ${script}/q_matrix.r ${dir_in} ${n_pop} ${pheno} ${pop_id} ${choice}"
 sbatch -W --wrap="Rscript ${script}/group_q_matrix.r ${dir_in} . ${pop_id2} ${pop_id} ${compo_threshold} ${pheno} ${choice}"
 
@@ -131,240 +121,185 @@ sbatch -o ${dir}/log/prep_pheno.out  -e ${dir}/log/prep_pheno.err -W --wrap="Rsc
 #########################################################
 
 #########################################################
+#################### ESTIMATE LD #################### 
+#make list Lig, Mel, Cau, Hyb
+#calculate LD for each group
+mkdir ${dir_in}/ld
+sbatch -J 'list_ld' --mem=20G -W --wrap="Rscript ${script}/list_ld.r ${dir_in}/seqapipop ${dir_in}/ld ${pop_id2} ${compo_threshold}"
+jobnum=()
+pop_idi=($(echo ${pop_id2}| tr "," "\n"))
+for i in ${pop_idi[@]}
+do
+	echo ${i}
+	sbatch --mem=200G -W --wrap="plink --bfile ${dir_in}/seqapipop/seqapipop --keep ${dir_in}/ld/list_${i}_ld.txt --keep-allele-order --make-bed --out ${dir_in}/ld/${i}"
+	chr=($(cut -f1 -d " " ${dir_in}/snp_list.txt | sort | uniq ))
+	unset 'chr[${#chr[@]}-1]'
+	echo ${chr[@]}
+	for c in ${chr[@]}
+	do 
+		echo $c
+		job=`sbatch --mem=200G --wrap="plink --bfile ${dir_in}/ld/${i} --chr $c --make-bed --out ${dir_in}/ld/${i}_${c}; plink --bfile ${dir_in}/ld/${i}_${c} --ld-window-r2 0.1 --out ${dir_in}/ld/ld_${i}_${c} --r2 inter-chr"`
+		jobnum+=(${job})
+	done
+done
+pat=$(echo ${jobnum[@]}|tr " " "|")
+x=$(squeue -u seynard | grep -Eow "$pat" |wc -l)
+while [ ${x} -gt 1 ]
+do
+	sleep 30m
+	x=$(squeue -u seynard | grep -Eow "$pat" |wc -l)
+done
+#########################################################
+
+#########################################################
 #################### RUN GWAS #################### 
 list=(`echo ${pop_id2} | sed 's/,/\n/g'`)
 jobnum=()
 for i in ${list[@]}
 do
-echo ${i}
-if [[ -f ${dir_in}/geno_hom_${i}.bgs ]] 
-then
-echo 'pop to run' 
-job=`sbatch -J ${i} --mem=100G -o ${dir}/log/${i}.out -e ${dir}/log/${i}.err --wrap="${script}/run_type.sh ${dir} ${dir_in} ${dir_out} ${script} ${i} ${maf_min} ${missing_rate}"`
-job=$(echo $job | cut -d' ' -f4 )
-jobnum+=(${job})
-fi
+	echo ${i}
+	if [[ -f ${dir_in}/geno_hom_${i}.bgs ]] 
+	then
+		echo 'pop to run' 
+		job=`sbatch -J ${i} --mem=100G -o ${dir}/log/${i}.out -e ${dir}/log/${i}.err --wrap="${script}/run_type.sh ${dir} ${dir_in} ${dir_out} ${script} ${i} ${maf_min} ${missing_rate}"`
+		job=$(echo $job | cut -d' ' -f4 )
+		jobnum+=(${job})
+	fi
 done
 pat=$(echo ${jobnum[@]}|tr " " "|")
 x=$(squeue -u seynard | grep -Eow "$pat" |wc -l)
 while [ ${x} -gt 1 ]
 do
-sleep 30m
-x=$(squeue -u seynard | grep -Eow "$pat" |wc -l)
+	sleep 30m
+	x=$(squeue -u seynard | grep -Eow "$pat" |wc -l)
 done
 list=(`echo ${pop_id2} | sed 's/,/\n/g'`)
 jobnum=()
 for i in ${list[@]}
 do
-echo ${i}
-if [[ -f ${dir_in}/geno_hom_${i}.bgs ]] 
-then
-job=`sbatch -J ${i} --mem=100G -o ${dir}/log/plot${i}.out -e ${dir}/log/plot${i}.err --wrap="Rscript ${script}/check_gwas.r ${dir_out} ${i} 0.1"`
-job=$(echo $job | cut -d' ' -f4 )
-jobnum+=(${job})
-fi
+	echo ${i}
+	if [[ -f ${dir_in}/geno_hom_${i}.bgs ]] 
+	then
+		job=`sbatch -J ${i} --mem=100G -o ${dir}/log/plot${i}.out -e ${dir}/log/plot${i}.err --wrap="Rscript ${script}/check_gwas.r ${dir_out} ${i} 0.1"`
+		job=$(echo $job | cut -d' ' -f4 )
+		jobnum+=(${job})
+	fi
 done
 pat=$(echo ${jobnum[@]}|tr " " "|")
 x=$(squeue -u seynard | grep -Eow "$pat" |wc -l)
 while [ ${x} -gt 1 ]
 do
-sleep 30m
-x=$(squeue -u seynard | grep -Eow "$pat" |wc -l)
+	sleep 30m
+	x=$(squeue -u seynard | grep -Eow "$pat" |wc -l)
 done
 bzip2 ${dir_out}/summary_gwas_*.txt
-
 #########################################################
 
 #########################################################
-#################### COMBINE GWAS WITH MANTRA #################### 
+#################### DEFINE GROUPS #################### 
 pheno_id=($(ls ${dir_out}/pheno_*.txt))
 pheno_list=()
 for i in ${pheno_id[@]}
 do
-pheno=$(echo ${i} | cut -d '/' -f9)
-pheno=$(echo ${pheno} | awk '{gsub(/pheno_/,"")}1')
-pheno=$(echo ${pheno} | awk '{gsub(/.txt/,"")}1')
-ele=($(echo ${pop_id2} |awk -F, '{for (i=1;i<=NF;i++)print $i}'))
-for j in ${ele[@]}
-do
-pheno=$(echo ${pheno} | awk '{gsub(/_'"${j}"'/,"")}1')
-pheno=$(echo ${pheno} | awk '{gsub(/'"${j}"'/,"")}1')
-done
-pheno_list[${#pheno_list[@]}]=${pheno}
+	pheno=$(echo ${i} | cut -d '/' -f9)
+	pheno=$(echo ${pheno} | awk '{gsub(/pheno_/,"")}1')
+	pheno=$(echo ${pheno} | awk '{gsub(/.txt/,"")}1')
+	ele=($(echo ${pop_id2} |awk -F, '{for (i=1;i<=NF;i++)print $i}'))
+	for j in ${ele[@]}
+	do
+		pheno=$(echo ${pheno} | awk '{gsub(/_'"${j}"'/,"")}1')
+		pheno=$(echo ${pheno} | awk '{gsub(/'"${j}"'/,"")}1')
+	done
+	pheno_list[${#pheno_list[@]}]=${pheno}
 done
 pheno_list=($(echo "${pheno_list[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' '))
-pop_idi=($(echo ${pop_id2}| tr "," "\n"))
-list_pop=
-for i in ${pop_idi[@]}
-do
-if [[ -f ${dir_out}//pheno_${i}.txt ]] 
-then
-list_pop+=${i},
-fi
-done
-list_pop=$(echo "${list_pop::-1}")
-#pheno_list=(chargevarroaracine4 logit_taux_reop_inf logit_varroainfestation pc1)
-#1)
-list_pop='Mellifera,Ligustica_Carnica,hybrid'
-jobnum=()
+list_pop=($(echo ${pop_id2[@]}| tr "," "\n"))
+delete=Caucasia
+list_pop=("${list_pop[@]/$delete}")
+#########################################################
+
+
+#########################################################
+#################### COMBINE GWAS WITH MANTRA #################### 
 for i in ${pheno_list[@]}
 do
-job=`sbatch -J 'mantra' -o ${dir}/log/mantra${i}.out -e ${dir}/log/mantra${i}.err --mem=100G --wrap="${script}/run_mantra.sh ${dir} ${script} ${dir_out} ${list_pop} ${i} egs 1"`
-job=`sbatch -J 'mantra' -o ${dir}/log/mantra${i}.out -e ${dir}/log/mantra${i}.err --mem=100G --wrap="${script}/run_mantra.sh ${dir} ${script} ${dir_out} ${list_pop} ${i} freq 1"`
-job=$(echo $job | cut -d' ' -f4 )
-jobnum+=(${job})
+	job=`sbatch -J 'mantra' -o ${dir}/log/mantra${i}.out -e ${dir}/log/mantra${i}.err --mem=100G --wrap="${script}/run_mantra.sh ${dir} ${script} ${dir_out} ${list_pop} ${i} egs"`
+	job=$(echo $job | cut -d' ' -f4 )
+	jobnum+=(${job})
 done
 pat=$(echo ${jobnum[@]}|tr " " "|")
 x=$(squeue -u seynard | grep -Eow "$pat" |wc -l)
 while [ ${x} -gt 1 ]
 do
-sleep 30m
-x=$(squeue -u seynard | grep -Eow "$pat" |wc -l)
-done
-#2)
-list_pop='Mellifera,Ligustica_nus,hybrid'
-jobnum=()
-for i in ${pheno_list[@]}
-do
-job=`sbatch -J 'mantra' -o ${dir}/log/mantra${i}.out -e ${dir}/log/mantra${i}.err --mem=100G --wrap="${script}/run_mantra.sh ${dir} ${script} ${dir_out} ${list_pop} ${i} egs 2"`
-job=`sbatch -J 'mantra' -o ${dir}/log/mantra${i}.out -e ${dir}/log/mantra${i}.err --mem=100G --wrap="${script}/run_mantra.sh ${dir} ${script} ${dir_out} ${list_pop} ${i} freq 2"`
-job=$(echo $job | cut -d' ' -f4 )
-jobnum+=(${job})
-done
-pat=$(echo ${jobnum[@]}|tr " " "|")
-x=$(squeue -u seynard | grep -Eow "$pat" |wc -l)
-while [ ${x} -gt 1 ]
-do
-sleep 30m
-x=$(squeue -u seynard | grep -Eow "$pat" |wc -l)
+	sleep 30m
+	x=$(squeue -u seynard | grep -Eow "$pat" |wc -l)
 done
 #########################################################
 
 #########################################################
 #################### COMBINE GWAS WITH MASH #################### 
-pop_idi=($(echo ${pop_id2}| tr "," "\n"))
-list_pop=
-for i in ${pop_idi[@]}
-do
-if [[ -f ${dir_out}//pheno_${i}.txt ]] 
-then
-list_pop+=${i},
-fi
-done
-list_pop=$(echo "${list_pop::-1}")
-pheno_id=($(ls ${dir_out}/summary_gwas*.txt.bz2))
-pheno_list=()
-for i in ${pheno_id[@]}
-do
-pheno=$(echo ${i} | cut -d '/' -f9)
-pheno=$(echo ${pheno} | awk '{gsub(/_freq_freq.txt.bz2/,"")}1')
-pheno=$(echo ${pheno} | awk '{gsub(/_freq_egs.txt.bz2/,"")}1')
-pheno=$(echo ${pheno} | awk '{gsub(/summary_gwas_/,"")}1')
-ele=($(echo ${pop_id2} |awk -F, '{for (i=1;i<=NF;i++)print $i}'))
-for j in ${ele[@]}
-do
-pheno=$(echo ${pheno} | awk '{gsub(/_'"${j}"'/,"")}1')
-pheno=$(echo ${pheno} | awk '{gsub(/'"${j}"'_/,"")}1')
-done
-pheno_list[${#pheno_list[@]}]=${pheno}
-done
-pheno_list=($(echo "${pheno_list[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' '))
-#1)
-list_pop='Mellifera,Ligustica_Carnica,hybrid'
 jobnum=()
 for i in ${pheno_list[@]}
 do
-job=`sbatch -o ${dir}/log/analysis_mash_${i}_egs1.out -e ${dir}/log/analysis_mash_${i}_egs1.err -J 'mash' --mem=200G --wrap="Rscript ${script}/run_mash.r ${dir_out} ${i} egs 0.2 ${list_pop} 1"`
-job=`sbatch -o ${dir}/log/analysis_mash_${i}_freq1.out -e ${dir}/log/analysis_mash_${i}_freq1.err -J 'mash' --mem=200G --wrap="Rscript ${script}/run_mash.r ${dir_out} ${i} freq 0.2 ${list_pop} 1"`
-job=$(echo $job | cut -d' ' -f4 )
-jobnum+=(${job})
+	job=`sbatch -o ${dir}/log/analysis_mash_${i}_egs1.out -e ${dir}/log/analysis_mash_${i}_egs1.err -J 'mash' --mem=200G --wrap="Rscript ${script}/run_mash.r ${dir_out} ${i} egs 0.2 ${list_pop}"`
+	job=$(echo $job | cut -d' ' -f4 )
+	jobnum+=(${job})
 done
 pat=$(echo ${jobnum[@]}|tr " " "|")
 x=$(squeue -u seynard | grep -Eow "$pat" |wc -l)
 while [ ${x} -gt 1 ]
 do
-sleep 30m
-x=$(squeue -u seynard | grep -Eow "$pat" |wc -l)
-done
-#2)
-list_pop='Mellifera,Ligustica_nus,hybrid'
-jobnum=()
-for i in ${pheno_list[@]}
-do
-job=`sbatch -o ${dir}/log/analysis_mash_${i}_egs2.out -e ${dir}/log/analysis_mash_${i}_egs2.err -J 'mash' --mem=200G --wrap="Rscript ${script}/run_mash.r ${dir_out} ${i} egs 0.2 ${list_pop} 2"`
-job=`sbatch -o ${dir}/log/analysis_mash_${i}_freq2.out -e ${dir}/log/analysis_mash_${i}_freq2.err -J 'mash' --mem=200G --wrap="Rscript ${script}/run_mash.r ${dir_out} ${i} freq 0.2 ${list_pop} 2"`
-job=$(echo $job | cut -d' ' -f4 )
-jobnum+=(${job})
-done
-pat=$(echo ${jobnum[@]}|tr " " "|")
-x=$(squeue -u seynard | grep -Eow "$pat" |wc -l)
-while [ ${x} -gt 1 ]
-do
-sleep 30m
-x=$(squeue -u seynard | grep -Eow "$pat" |wc -l)
+	sleep 30m
+	x=$(squeue -u seynard | grep -Eow "$pat" |wc -l)
 done
 #########################################################
 
 #########################################################
-#################### ESTIMATE LD #################### 
-#make list Lig, Mel, Cau, Hyb
-#calculate LD for each group
-
-mkdir ${dir_in}/ld
-sbatch -J 'list_ld' --mem=20G -W --wrap="Rscript ${script}/list_ld.r ${dir_in}/seqapipop ${dir_in}/ld ${pop_id2} ${compo_threshold}"
+#################### ANALYSIS ON GENES #################### 
+awk -F',' '{print $1" "$2" "$3" "$6}' ${dir_in}/proteins_48_403979.csv > ${dir_in}/gene_list.txt
+sed -i -e 's/"linkage group LG1"/1/g' ${dir_in}/gene_list.txt
+sed -i -e 's/"linkage group LG2"/2/g' ${dir_in}/gene_list.txt
+sed -i -e 's/"linkage group LG3"/3/g' ${dir_in}/gene_list.txt
+sed -i -e 's/"linkage group LG4"/4/g' ${dir_in}/gene_list.txt
+sed -i -e 's/"linkage group LG5"/5/g' ${dir_in}/gene_list.txt
+sed -i -e 's/"linkage group LG6"/6/g' ${dir_in}/gene_list.txt
+sed -i -e 's/"linkage group LG7"/7/g' ${dir_in}/gene_list.txt
+sed -i -e 's/"linkage group LG8"/8/g' ${dir_in}/gene_list.txt
+sed -i -e 's/"linkage group LG9"/9/g' ${dir_in}/gene_list.txt
+sed -i -e 's/"linkage group LG10"/10/g' ${dir_in}/gene_list.txt
+sed -i -e 's/"linkage group LG11"/11/g' ${dir_in}/gene_list.txt
+sed -i -e 's/"linkage group LG12"/12/g' ${dir_in}/gene_list.txt
+sed -i -e 's/"linkage group LG13"/13/g' ${dir_in}/gene_list.txt
+sed -i -e 's/"linkage group LG14"/14/g' ${dir_in}/gene_list.txt
+sed -i -e 's/"linkage group LG15"/15/g' ${dir_in}/gene_list.txt
+sed -i -e 's/"linkage group LG16"/16/g' ${dir_in}/gene_list.txt
+sed -i -e 's/"Un"/-9/g' ${dir_in}/gene_list.txt
+sed -i -e 's/"mitochondrion MT"/-9/g' ${dir_in}/gene_list.txt
+sed -i -e 's/"//g' ${dir_in}/gene_list.txt
+awk '!seen[$0]++' ${dir_in}/gene_list.txt > ${dir_in}/tmp_gene_list && mv ${dir_in}/tmp_gene_list ${dir_in}/gene_list.txt
+sed -i '/^-9/d' ${dir_in}/gene_list.txt
 
 jobnum=()
-pop_idi=($(echo ${pop_id2}| tr "," "\n"))
-for i in ${pop_idi[@]}
+for i in ${list_pop[@]}
 do
-echo ${i}
-sbatch --mem=200G -W --wrap="plink --bfile ${dir_in}/seqapipop/seqapipop --keep ${dir_in}/ld/list_${i}_ld.txt --keep-allele-order --make-bed --out ${dir_in}/ld/${i}"
-chr=($(cut -f1 -d " " ${dir_in}/snp_list.txt | sort | uniq ))
-unset 'chr[${#chr[@]}-1]'
-echo ${chr[@]}
-for c in ${chr[@]}
-do 
-echo $c
-job=`sbatch --mem=200G --wrap="plink --bfile ${dir_in}/ld/${i} --chr $c --make-bed --out ${dir_in}/ld/${i}_${c}; plink --bfile ${dir_in}/ld/${i}_${c} --ld-window-r2 0.1 --out ${dir_in}/ld/ld_${i}_${c} --r2 inter-chr"`
-jobnum+=(${job})
-done
+	echo ${i}
+	for j in ${pheno_list[@]}
+		echo ${j}
+		n=$(grep 'number of analyzed individuals' ${dir_out}/gemma_${i}_${j}_freq_lmm_egs_cov.log.txt | cut -d '=' -f2)
+		awk -v var="${n}" '{print $2" "$5" "$6" "$7" "$8" "$9" "$12" "var}' ${dir_out}/gemma_${i}_${j}_freq_lmm_egs_cov.assoc.txt > ${dir_out}/${j}_in_${i}.ma
+		var="SNP A1 A2 freq BETA SE P N"
+		sed -i "1s/.*/$var/" ${dir_out}/${j}_in_${i}.ma
+		job=`sbatch --mem=8G --wrap="./gcta-1.94.1 --bfile ${i} --mBAT-combo ${dir_out}/${j}_in_${i}.ma --mBAT-gene-list ${dir_in}/gene_list.txt --out ${dir_out}/${j}_in_${i} --thread-num 1 --diff-freq 1 --mBAT-wind 5 --fastBAT-ld-cutoff 0.8 --mBAT-print-all-p"`
+		jobnum+=(${job})
+	done
 done
 pat=$(echo ${jobnum[@]}|tr " " "|")
 x=$(squeue -u seynard | grep -Eow "$pat" |wc -l)
 while [ ${x} -gt 1 ]
 do
-sleep 30m
-x=$(squeue -u seynard | grep -Eow "$pat" |wc -l)
+	sleep 30m
+	x=$(squeue -u seynard | grep -Eow "$pat" |wc -l)
 done
+#########################################################
 
-cd /work/genphyse/dynagen/seynard/GWAS/infestation4
-#plot_paper_description.r # description phenotypes and populations 
-sbatch --mem=200G --wrap="Rscript scripts/plot_gwas_ind.r" # results from individual GWAS
-sbatch --mem=200G --wrap="Rscript scripts/analysis.r 1" # results from meta-analysis
-sbatch --mem=200G --wrap="Rscript scripts/analysis.r 2" # results from meta-analysis
-awk '{print $2}' sign_gwas_ind.txt > tmp_ind
-awk -F';' '{print $3}' results/sign_locus_1.txt > tmp_meta1
-awk -F';' '{print $3}' results/sign_locus_2.txt > tmp_meta2
-cat tmp_ind tmp_meta1 tmp_meta2 > sign.txt
-rm tmp_ind tmp_meta1 tmp_meta2
-cat -n sign.txt | sort -uk2 | sort -nk1 | cut -f2- > tmp_sign && mv tmp_sign sign.txt
-sed -i '/rs/d' sign.txt
-N=($(awk '{print $1}' ${dir}/sign.txt | uniq))
-for i in ${N[@]}
-do
-rs_snp=$(echo ${i} | cut -f1 -d' ')
-chr=$(echo ${rs_snp} | cut -f1 -d':')
-sbatch --wrap="${script}/ld_sign.sh ${dir_in}/ld ${rs_snp} ${chr}"
-done
-# plot_paper_description.r
-sbatch --mem=5G --wrap="Rscript scripts/plot_paper_description.r 1"
-sbatch --mem=5G --wrap="Rscript scripts/plot_paper_description.r 2"
-# plot_overlap.r
-sbatch --mem=200G --wrap="Rscript scripts/plot_overlap.r 1"
-sbatch --mem=200G --wrap="Rscript scripts/plot_overlap.r 2"
-# plot_LD_MantravsMash.r
-sbatch --mem=200G --wrap="Rscript scripts/plot_LD_MantravsMash.r 1"
-sbatch --mem=200G --wrap="Rscript scripts/plot_LD_MantravsMash.r 2"
-# plot_effects_MantravsMash.r
-sbatch --mem=200G --wrap="Rscript scripts/plot_effects_MantravsMash.r 1"
-sbatch --mem=200G --wrap="Rscript scripts/plot_effects_MantravsMash.r 2"
+
