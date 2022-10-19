@@ -255,6 +255,34 @@ done
 #########################################################
 
 #########################################################
+#################### MARKER GENE CORRESPONDANCE #################### 
+var1='/'
+var2='+'
+awk -v var1="${var1}" -v var2="${var2}" '{print $1" "$2" "$2" "$3""var1""$4" "var2}' ${dir_in}/allele_id_final.txt > ${dir_in}/input_vep.txt	
+awk '$1=="10"{$1="CM009940.2"}1' ${dir_in}/input_vep.txt > ${dir_in}/tmp && mv ${dir_in}/tmp ${dir_in}/input_vep.txt
+awk '$1=="11"{$1="CM009941.2"}1' ${dir_in}/input_vep.txt > ${dir_in}/tmp && mv ${dir_in}/tmp ${dir_in}/input_vep.txt
+awk '$1=="12"{$1="CM009942.2"}1' ${dir_in}/input_vep.txt > ${dir_in}/tmp && mv ${dir_in}/tmp ${dir_in}/input_vep.txt
+awk '$1=="13"{$1="CM009943.2"}1' ${dir_in}/input_vep.txt > ${dir_in}/tmp && mv ${dir_in}/tmp ${dir_in}/input_vep.txt
+awk '$1=="14"{$1="CM009944.2"}1' ${dir_in}/input_vep.txt > ${dir_in}/tmp && mv ${dir_in}/tmp ${dir_in}/input_vep.txt
+awk '$1=="15"{$1="CM009945.2"}1' ${dir_in}/input_vep.txt > ${dir_in}/tmp && mv ${dir_in}/tmp ${dir_in}/input_vep.txt
+awk '$1=="16"{$1="CM009946.2"}1' ${dir_in}/input_vep.txt > ${dir_in}/tmp && mv ${dir_in}/tmp ${dir_in}/input_vep.txt
+awk '$1=="1"{$1="CM009931.2"}1' ${dir_in}/input_vep.txt > ${dir_in}/tmp && mv ${dir_in}/tmp ${dir_in}/input_vep.txt
+awk '$1=="2"{$1="CM009932.2"}1' ${dir_in}/input_vep.txt > ${dir_in}/tmp && mv ${dir_in}/tmp ${dir_in}/input_vep.txt
+awk '$1=="3"{$1="CM009933.2"}1' ${dir_in}/input_vep.txt > ${dir_in}/tmp && mv ${dir_in}/tmp ${dir_in}/input_vep.txt
+awk '$1=="4"{$1="CM009934.2"}1' ${dir_in}/input_vep.txt > ${dir_in}/tmp && mv ${dir_in}/tmp ${dir_in}/input_vep.txt
+awk '$1=="5"{$1="CM009935.2"}1' ${dir_in}/input_vep.txt > ${dir_in}/tmp && mv ${dir_in}/tmp ${dir_in}/input_vep.txt
+awk '$1=="6"{$1="CM009936.2"}1' ${dir_in}/input_vep.txt > ${dir_in}/tmp && mv ${dir_in}/tmp ${dir_in}/input_vep.txt
+awk '$1=="7"{$1="CM009937.2"}1' ${dir_in}/input_vep.txt > ${dir_in}/tmp && mv ${dir_in}/tmp ${dir_in}/input_vep.txt
+awk '$1=="8"{$1="CM009938.2"}1' ${dir_in}/input_vep.txt > ${dir_in}/tmp && mv ${dir_in}/tmp ${dir_in}/input_vep.txt
+awk '$1=="9"{$1="CM009939.2"}1' ${dir_in}/input_vep.txt > ${dir_in}/tmp && mv ${dir_in}/tmp ${dir_in}/input_vep.txt
+cp ${dir_in}/input_vep.txt ${dir}/ensembl-vep/
+cd ${dir}/ensembl-vep/
+./vep -i input_vep.txt -o output_vep.txt --species apis_mellifera --database --genomes --force_overwrite
+cd
+cp ${dir}/ensembl-vep/output_vep.txt ${dir_out}/output_vep.txt
+#########################################################
+
+#########################################################
 #################### ANALYSIS ON GENES #################### 
 awk -F',' '{print $1" "$2" "$3" "$6}' ${dir_in}/proteins_48_403979.csv > ${dir_in}/gene_list.txt
 sed -i -e 's/"linkage group LG1"/1/g' ${dir_in}/gene_list.txt
