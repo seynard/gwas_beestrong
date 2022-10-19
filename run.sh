@@ -1,30 +1,30 @@
 #! /bin/bash
 ##################################################
 #################### PARAMETERS #################### 
-dir="/work/genphyse/dynagen/seynard/GWAS/infestation4"
-script="/work/genphyse/dynagen/seynard/GWAS/infestation4/scripts"
-dir_out="/work/genphyse/dynagen/seynard/GWAS/infestation4/results"
-dir_in="/work/genphyse/dynagen/seynard/GWAS/infestation4/data"
-dir_save="/genphyse/dynagen/BeeStrong"
-fasta=${dir_save}/Fasta/GCF_003254395.2_Amel_HAv3.1_genomic.fna
-vcf_name="MetaGenotypesCalled870_raw_snps"
-vcf_sansfiltre=${dir_in}/${vcf_name}.vcf.gz
+dir="~/GWAS/infestation" 
+script="~/GWAS/infestation/scripts"  
+dir_out="~/GWAS/infestation/results" 
+dir_in="~/GWAS/infestation/data" 
+dir_save="~/save" 
+fasta=${dir_save}/Fasta/GCF_003254395.2_Amel_HAv3.1_genomic.fna 
+vcf_name="MetaGenotypesCalled870_raw_snps" 
+vcf_sansfiltre=${dir_in}/${vcf_name}.vcf.gz 
 vcf_file=${dir_in}/${vcf_name}_allfilter.vcf 
-pop_id="Mellifera,Caucasia,Ligustica_Carnica"
-n_pop=$(echo $(IFS=","; set -f; set -- $pop_id; echo $#))
-pop_id2="Mellifera,Caucasia,Ligustica_Carnica,hybrid"
-pheno="Data_BS.csv"
-pheno_mito='compareDepthsBeeVarroa.txt'
-snp50k='HAV3_1_50000.txt'
-maf_min=0.01
-compo_threshold=0.8
-missing_rate=0.05
+pop_id="Mellifera,Caucasia,Ligustica_Carnica" 
+n_pop=$(echo $(IFS=","; set -f; set -- $pop_id; echo $#)) 
+pop_id2="Mellifera,Caucasia,Ligustica_Carnica,hybrid" 
+pheno="Data_BS.csv" 
+pheno_mito='compareDepthsBeeVarroa.txt' 
+snp50k='HAV3_1_50000.txt' 
+maf_min=0.01 
+missing_rate=0.05 
+compo_threshold=0.8 
+unif_threshold=0.99 
+d_min=10 
+d_max=50 
+pool_size_def=150 
 ncpu=10
-unif_threshold=0.99
-nbjobs=10
-d_min=10
-d_max=50
-pool_size_def=150
+nbjobs=10 
 ##################################################
 
 ################################################
