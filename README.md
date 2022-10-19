@@ -19,6 +19,9 @@
 	- [7.2. MANTRA](#72-MANTRA)
 	- [7.3. Mash](#73-mash)
 - [8. Analysis on genes](#Genes)
+	- [8.1. Marker vs genes correspondence](#81-Marker-vs-genes-correspondence)
+	- [8.2. Statistical analysis on genes](#82-Statistical-analysis-on-genes)
+
 <!-- /TOC -->
 
 ## 1. Introduction
@@ -27,9 +30,9 @@ A large genome wide association study on a heterogeneous honeybee, Apis mellifer
 Sonia E Eynard, Alain Vignal, Benjamin Basso, Olivier Bouchez, Tabatha Bulach, Yves Le Conte, Benjamin Bainat, Axel Decourtye, Lucie Genestout, Matthieu Guichard, François Guillaume, Emmanuelle Labarthe, Rachid Mahla, Fanny Mondet, Markus, Neudischko, Florence Phocas, Yannick Poquet, Christina Sann, Rémi-Félix Serre, Kamila Tabet, Bertrand Servin \
 bioRxiv , doi: \
 
-The genome version used is HAV3.1 (Wallberg et al. 2019, doi: 10.1186/s12864-019-5642-0), the VCF for diversity panel from Wragg et al. 2022 (doi: 10.1111/1755-0998.13665) with 870 and 628 individuals were used. 
-All scripts to perform simulations and analysis are available in this GitHub repository, scripts for the statistical models to estimate genetic composition and reconstruct queen genotype are available at the GitHub repository : https://github.com/BertrandServin/beethoven. 
-This pipeline is available in the script RUN.sh. 
+The genome version used is HAV3.1 (Wallberg et al. 2019, doi: 10.1186/s12864-019-5642-0), the VCF for diversity panel from Wragg et al. 2022 (doi: 10.1111/1755-0998.13665) with 870 and 628 individuals were used.
+All scripts to perform simulations and analysis are available in this GitHub repository, scripts for the statistical models to estimate genetic composition and reconstruct queen genotype are available at the GitHub repository : https://github.com/BertrandServin/beethoven.
+This pipeline is available in the script RUN.sh.
 
 ## 2. Data preparation
 ### 2.1. Initialisation of parameters
@@ -64,7 +67,7 @@ dir_save="~/save"
 fasta=${dir_save}/Fasta/GCF_003254395.2_Amel_HAv3.1_genomic.fna
 vcf_name="MetaGenotypesCalled870_raw_snps"
 vcf_sansfiltre=${dir_in}/${vcf_name}.vcf.gz
-vcf_file=${dir_in}/${vcf_name}_allfilter.vcf 
+vcf_file=${dir_in}/${vcf_name}_allfilter.vcf
 pop_id="Mellifera,Caucasia,Ligustica_Carnica"
 n_pop=$(echo $(IFS=","; set -f; set -- $pop_id; echo $#))
 pop_id2="Mellifera,Caucasia,Ligustica_Carnica,hybrid"
@@ -82,13 +85,13 @@ d_max=50
 pool_size_def=150
 ```
 
-### 2.3. Prep data for reference populations 
-In Wragg et al. 2022 () a vcf for honeybee population representative of the genetic diversity in Europe has been developped. We use this diversity panel in this analysis to describe reference populations for the three main subspecies in Europe, and thus present in our french heterogeneous population, that are: Apis mellifera mellifera, Apis mellifera ligustica & carnica and Apis mellifera caucasia. 
+### 2.3. Prep data for reference populations
+In Wragg et al. 2022 () a vcf for honeybee population representative of the genetic diversity in Europe has been developped. We use this diversity panel in this analysis to describe reference populations for the three main subspecies in Europe, and thus present in our french heterogeneous population, that are: Apis mellifera mellifera, Apis mellifera ligustica & carnica and Apis mellifera caucasia.
 ```bash
 sbatch -W --mem=100G --job-name='prep_seqapipop' --wrap="${script}/prep_seqapipop.sh ${script} ${dir_in} ${vcf_file} ${n_pop} ${pop_id} ${unif_threshold} ${ncpu}"
 ```
 
-### 2.4. Prep pool sequence data 
+### 2.4. Prep pool sequence data
 ```bash
 sbatch -W --mem=200G --job-name='prep_pileup' --wrap="${script}/prep_pileup.sh ${script} ${dir_in} ${fasta} ${vcf_name} ${vcf_sansfiltre} ${vcf_file} ${snp50k} ${nbjobs} ${d_min} ${d_max} ${pool_size_def}"
 ```
@@ -112,7 +115,7 @@ do
 	job=`sbatch --mem=100G --job-name='het' --wrap="${script}/run_het.sh ${dir_in} ${cname} ${n_pop} ${snp50k} ${j}"`
 	job=$(echo $job | cut -d' ' -f4 )
 	jobnum+=(${job})
-done	
+done
 pat=$(echo ${jobnum[@]}|tr " " "|")
 x=$(squeue -u seynard | grep -Eow "$pat" |wc -l)
 while [ ${x} -gt 1 ]
@@ -128,7 +131,7 @@ bzip2 ${dir_in}/input/*
 
 ### 3.2. Group by homogeneous genetic composition
 ```bash
-choice='_50k' 
+choice='_50k'
 sbatch -W --wrap="Rscript ${script}/q_matrix.r ${dir_in} ${n_pop} ${pheno} ${pop_id} ${choice}"
 sbatch -W --wrap="Rscript ${script}/group_q_matrix.r ${dir_in} . ${pop_id2} ${pop_id} ${compo_threshold} ${pheno} ${choice}"
 ```
@@ -159,7 +162,7 @@ awk '{print $1" "$2" "$3" "$4}' ${dir_in}/depth.txt > ${dir_in}/allele_id_final.
 tail -n +2 ${dir_in}/allele_id_final.txt  > ${dir_in}/tmp && mv ${dir_in}/tmp ${dir_in}/allele_id_final.txt
 ```
 
-## 4. Phenotypes 
+## 4. Phenotypes
 ```bash
 sbatch -o ${dir}/log/prep_pheno.out  -e ${dir}/log/prep_pheno.err -W --wrap="Rscript ${script}/prep_pheno.r ${dir_in} ${dir_out} ${pheno} ${pop_id2} ${pheno_mito}"
 ```
@@ -178,7 +181,7 @@ do
 	unset 'chr[${#chr[@]}-1]'
 	echo ${chr[@]}
 	for c in ${chr[@]}
-	do 
+	do
 		echo $c
 		job=`sbatch --mem=200G --wrap="plink --bfile ${dir_in}/ld/${i} --chr $c --make-bed --out ${dir_in}/ld/${i}_${c}; plink --bfile ${dir_in}/ld/${i}_${c} --ld-window-r2 0.1 --out ${dir_in}/ld/ld_${i}_${c} --r2 inter-chr"`
 		jobnum+=(${job})
@@ -200,9 +203,9 @@ jobnum=()
 for i in ${list[@]}
 do
 	echo ${i}
-	if [[ -f ${dir_in}/geno_hom_${i}.bgs ]] 
+	if [[ -f ${dir_in}/geno_hom_${i}.bgs ]]
 	then
-		echo 'pop to run' 
+		echo 'pop to run'
 		job=`sbatch -J ${i} --mem=100G -o ${dir}/log/${i}.out -e ${dir}/log/${i}.err --wrap="${script}/run_type.sh ${dir} ${dir_in} ${dir_out} ${script} ${i} ${maf_min} ${missing_rate}"`
 		job=$(echo $job | cut -d' ' -f4 )
 		jobnum+=(${job})
@@ -220,7 +223,7 @@ jobnum=()
 for i in ${list[@]}
 do
 	echo ${i}
-	if [[ -f ${dir_in}/geno_hom_${i}.bgs ]] 
+	if [[ -f ${dir_in}/geno_hom_${i}.bgs ]]
 	then
 		job=`sbatch -J ${i} --mem=100G -o ${dir}/log/plot${i}.out -e ${dir}/log/plot${i}.err --wrap="Rscript ${script}/check_gwas.r ${dir_out} ${i} 0.1"`
 		job=$(echo $job | cut -d' ' -f4 )
@@ -299,6 +302,36 @@ done
 ```
 
 ## 8. Analysis on genes
+### 8.1. Marker vs genes correspondence
+Variant Effect Predictor. This Ensembl's tool provides, for each marker tested it's location and distance to nearby genes, the type of variation associated (upstream, downstream, intronic) and its effect (mutation ...).
+```bash
+var1='/'
+var2='+'
+awk -v var1="${var1}" -v var2="${var2}" '{print $1" "$2" "$2" "$3""var1""$4" "var2}' ${dir_in}/allele_id_final.txt > ${dir_in}/input_vep.txt
+awk '$1=="10"{$1="CM009940.2"}1' ${dir_in}/input_vep.txt > ${dir_in}/tmp && mv ${dir_in}/tmp ${dir_in}/input_vep.txt
+awk '$1=="11"{$1="CM009941.2"}1' ${dir_in}/input_vep.txt > ${dir_in}/tmp && mv ${dir_in}/tmp ${dir_in}/input_vep.txt
+awk '$1=="12"{$1="CM009942.2"}1' ${dir_in}/input_vep.txt > ${dir_in}/tmp && mv ${dir_in}/tmp ${dir_in}/input_vep.txt
+awk '$1=="13"{$1="CM009943.2"}1' ${dir_in}/input_vep.txt > ${dir_in}/tmp && mv ${dir_in}/tmp ${dir_in}/input_vep.txt
+awk '$1=="14"{$1="CM009944.2"}1' ${dir_in}/input_vep.txt > ${dir_in}/tmp && mv ${dir_in}/tmp ${dir_in}/input_vep.txt
+awk '$1=="15"{$1="CM009945.2"}1' ${dir_in}/input_vep.txt > ${dir_in}/tmp && mv ${dir_in}/tmp ${dir_in}/input_vep.txt
+awk '$1=="16"{$1="CM009946.2"}1' ${dir_in}/input_vep.txt > ${dir_in}/tmp && mv ${dir_in}/tmp ${dir_in}/input_vep.txt
+awk '$1=="1"{$1="CM009931.2"}1' ${dir_in}/input_vep.txt > ${dir_in}/tmp && mv ${dir_in}/tmp ${dir_in}/input_vep.txt
+awk '$1=="2"{$1="CM009932.2"}1' ${dir_in}/input_vep.txt > ${dir_in}/tmp && mv ${dir_in}/tmp ${dir_in}/input_vep.txt
+awk '$1=="3"{$1="CM009933.2"}1' ${dir_in}/input_vep.txt > ${dir_in}/tmp && mv ${dir_in}/tmp ${dir_in}/input_vep.txt
+awk '$1=="4"{$1="CM009934.2"}1' ${dir_in}/input_vep.txt > ${dir_in}/tmp && mv ${dir_in}/tmp ${dir_in}/input_vep.txt
+awk '$1=="5"{$1="CM009935.2"}1' ${dir_in}/input_vep.txt > ${dir_in}/tmp && mv ${dir_in}/tmp ${dir_in}/input_vep.txt
+awk '$1=="6"{$1="CM009936.2"}1' ${dir_in}/input_vep.txt > ${dir_in}/tmp && mv ${dir_in}/tmp ${dir_in}/input_vep.txt
+awk '$1=="7"{$1="CM009937.2"}1' ${dir_in}/input_vep.txt > ${dir_in}/tmp && mv ${dir_in}/tmp ${dir_in}/input_vep.txt
+awk '$1=="8"{$1="CM009938.2"}1' ${dir_in}/input_vep.txt > ${dir_in}/tmp && mv ${dir_in}/tmp ${dir_in}/input_vep.txt
+awk '$1=="9"{$1="CM009939.2"}1' ${dir_in}/input_vep.txt > ${dir_in}/tmp && mv ${dir_in}/tmp ${dir_in}/input_vep.txt
+cp ${dir_in}/input_vep.txt ${dir}/ensembl-vep/
+cd ${dir}/ensembl-vep/
+./vep -i input_vep.txt -o output_vep.txt --species apis_mellifera --database --genomes --force_overwrite
+cd
+cp ${dir}/ensembl-vep/output_vep.txt ${dir_out}/output_vep.txt
+```
+
+### 8.2. Statistical analysis on genes
 mBAT-combo (GCTA suite, Li et al. 2022)
 ```bash
 awk -F',' '{print $1" "$2" "$3" "$6}' ${dir_in}/proteins_48_403979.csv > ${dir_in}/gene_list.txt
@@ -346,4 +379,3 @@ do
 	x=$(squeue -u seynard | grep -Eow "$pat" |wc -l)
 done
 ```
-
