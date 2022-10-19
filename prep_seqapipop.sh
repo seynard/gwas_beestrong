@@ -43,7 +43,7 @@ admixture --cv -j${ncpu} seqapipop_sample.bed ${K}
 cd
 Rscript ${script}/admix_plot.r ${dir_in}/seqapipop seqapipop_sample ${pop_id}
 
-# definition of sub-species: mellifera, caucasica, ligustica/carnica 
+# definition of sub-species: mellifera, caucasia, ligustica/carnica 
 Rscript ${script}/prep_admix_k.r ${dir_in}/seqapipop seqapipop_sample ${pop_id} ${unif_threshold}
 sample=($(awk "{print $1}" ${dir_in}/seqapipop/Unif_k.fam))
 sample2=""
