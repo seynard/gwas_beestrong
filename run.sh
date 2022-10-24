@@ -284,28 +284,75 @@ cp ${dir}/ensembl-vep/output_vep.txt ${dir_out}/output_vep.txt
 
 #########################################################
 #################### ANALYSIS ON GENES #################### 
-awk -F',' '{print $1" "$2" "$3" "$6}' ${dir_in}/proteins_48_403979.csv > ${dir_in}/gene_list.txt
-sed -i -e 's/"linkage group LG1"/1/g' ${dir_in}/gene_list.txt
-sed -i -e 's/"linkage group LG2"/2/g' ${dir_in}/gene_list.txt
-sed -i -e 's/"linkage group LG3"/3/g' ${dir_in}/gene_list.txt
-sed -i -e 's/"linkage group LG4"/4/g' ${dir_in}/gene_list.txt
-sed -i -e 's/"linkage group LG5"/5/g' ${dir_in}/gene_list.txt
-sed -i -e 's/"linkage group LG6"/6/g' ${dir_in}/gene_list.txt
-sed -i -e 's/"linkage group LG7"/7/g' ${dir_in}/gene_list.txt
-sed -i -e 's/"linkage group LG8"/8/g' ${dir_in}/gene_list.txt
-sed -i -e 's/"linkage group LG9"/9/g' ${dir_in}/gene_list.txt
-sed -i -e 's/"linkage group LG10"/10/g' ${dir_in}/gene_list.txt
-sed -i -e 's/"linkage group LG11"/11/g' ${dir_in}/gene_list.txt
-sed -i -e 's/"linkage group LG12"/12/g' ${dir_in}/gene_list.txt
-sed -i -e 's/"linkage group LG13"/13/g' ${dir_in}/gene_list.txt
-sed -i -e 's/"linkage group LG14"/14/g' ${dir_in}/gene_list.txt
-sed -i -e 's/"linkage group LG15"/15/g' ${dir_in}/gene_list.txt
-sed -i -e 's/"linkage group LG16"/16/g' ${dir_in}/gene_list.txt
-sed -i -e 's/"Un"/-9/g' ${dir_in}/gene_list.txt
-sed -i -e 's/"mitochondrion MT"/-9/g' ${dir_in}/gene_list.txt
-sed -i -e 's/"//g' ${dir_in}/gene_list.txt
-awk '!seen[$0]++' ${dir_in}/gene_list.txt > ${dir_in}/tmp_gene_list && mv ${dir_in}/tmp_gene_list ${dir_in}/gene_list.txt
-sed -i '/^-9/d' ${dir_in}/gene_list.txt
+awk -F' ' '$3 == "gene"' ${dir_in}/GCF_003254395.2_Amel_HAv3.1_genomic.gff > ${dir_in}/gene_list_HAV3_1.txt
+awk -F' ' '{print $1" "$4" "$5" "$9}' ${dir_in}/gene_list_HAV3_1.txt > ${dir_in}/gene_list_HAV3_1.tmp && mv ${dir_in}/gene_list_HAV3_1.tmp ${dir_in}/gene_list_HAV3_1.txt
+locus_name=$(cat ${dir_in}/gene_list_HAV3_1.txt | awk -F' ' '{print $4}' | cut -d';' -f1 | cut -d'-' -f2)
+awk -F' ' '{print $1" "$2" "$3" "}' ${dir_in}/gene_list_HAV3_1.txt > ${dir_in}/gene_list_HAV3_1.tmp && mv ${dir_in}/gene_list_HAV3_1.tmp ${dir_in}/gene_list_HAV3_1.txt
+paste -d ' ' ${dir_in}/gene_list_HAV3_1.txt <(printf "%s\n" $locus_name) > ${dir_in}/gene_list_HAV3_1.tmp && mv ${dir_in}/gene_list_HAV3_1.tmp ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NC_037638.1/1/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NC_037639.1/2/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NC_037640.1/3/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NC_037641.1/4/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NC_037642.1/5/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NC_037643.1/6/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NC_037644.1/7/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NC_037645.1/8/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NC_037646.1/9/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NC_037647.1/10/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NC_037648.1/11/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NC_037649.1/12/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NC_037650.1/13/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NC_037651.1/14/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NC_037652.1/15/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NC_037653.1/16/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NC_001566.1/-9/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NW_020555792.1/-9/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NW_020555794.1/-9/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NW_020555797.1/-9/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NW_020555801.1/-9/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NW_020555807.1/-9/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NW_020555812.1/-9/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NW_020555813.1/-9/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NW_020555814.1/-9/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NW_020555815.1/-9/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NW_020555821.1/-9/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NW_020555816.1/-9/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NW_020555822.1/-9/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NW_020555841.1/-9/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NW_020555842.1/-9/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NW_020555843.1/-9/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NW_020555846.1/-9/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NW_020555850.1/-9/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NW_020555851.1/-9/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NW_020555853.1/-9/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NW_020555855.1/-9/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NW_020555859.1/-9/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NW_020555860.1/-9/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NW_020555862.1/-9/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NW_020555863.1/-9/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NW_020555864.1/-9/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NW_020555866.1/-9/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NW_020555867.1/-9/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NW_020555868.1/-9/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NW_020555869.1/-9/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NW_020555870.1/-9/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NW_020555880.1/-9/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NW_020555886.1/-9/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NW_020555887.1/-9/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NW_020555889.1/-9/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NW_020555891.1/-9/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NW_020555894.1/-9/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NW_020555896.1/-9/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NW_020555901.1/-9/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NW_020555902.1/-9/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NW_020555904.1/-9/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NW_020555907.1/-9/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NW_020555912.1/-9/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NW_020555924.1/-9/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/NW_020555938.1/-9/g' ${dir_in}/gene_list_HAV3_1.txt
+sed -i -e 's/"//g' ${dir_in}/gene_list_HAV3_1.txt
+awk '!seen[$0]++' ${dir_in}/gene_list_HAV3_1.txt > ${dir_in}/gene_list_HAV3_1.tmp && mv ${dir_in}/gene_list_HAV3_1.tmp ${dir_in}/gene_list_HAV3_1.txt
+sed -i '/^-9/d' ${dir_in}/gene_list_HAV3_1.txt
 
 jobnum=()
 for i in ${list_pop[@]}
@@ -317,7 +364,7 @@ do
 		awk -v var="${n}" '{print $2" "$5" "$6" "$7" "$8" "$9" "$12" "var}' ${dir_out}/gemma_${i}_${j}_freq_lmm_egs_cov.assoc.txt > ${dir_out}/${j}_in_${i}.ma
 		var="SNP A1 A2 freq BETA SE P N"
 		sed -i "1s/.*/$var/" ${dir_out}/${j}_in_${i}.ma
-		job=`sbatch --mem=8G --wrap="./gcta-1.94.1 --bfile ${i} --mBAT-combo ${dir_out}/${j}_in_${i}.ma --mBAT-gene-list ${dir_in}/gene_list.txt --out ${dir_out}/${j}_in_${i} --thread-num 1 --diff-freq 1 --mBAT-wind 5 --fastBAT-ld-cutoff 0.8 --mBAT-print-all-p"`
+		job=`sbatch --mem=8G --wrap="./gcta-1.94.1 --bfile ${i} --mBAT-combo ${dir_out}/${j}_in_${i}.ma --mBAT-gene-list ${dir_in}/gene_list_HAV3_1.txt --out ${dir_out}/${j}_in_${i} --thread-num 1 --diff-freq 1 --mBAT-wind 5 --fastBAT-ld-cutoff 0.8 --mBAT-print-all-p"`
 		jobnum+=(${job})
 	done
 done
