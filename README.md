@@ -20,20 +20,18 @@
 - [7. Linkage disequilibrium](#5-LD)
 - [8. Analysis on genes](#Genes)
 	- [8.1. Marker vs genes correspondence](#81-Marker-vs-genes-correspondence)
-	- [8.2. Statistical analysis on genes](#82-Statistical-analysis-on-genes)
 
 <!-- /TOC -->
 
 ## 1. Introduction
-This repository contains the scripts to perform the analysis described in the paper:
-A large genome wide association study on a heterogeneous honeybee, <i>Apis mellifera</i>, population reveals the polygenic genetic architecture for resistance to the major honeybee parasite, <i>Varroa destructor</i>\
-Sonia E Eynard, Alain Vignal, Benjamin Basso, Olivier Bouchez, Tabatha Bulach, Yves Le Conte, Benjamin Bainat, Axel Decourtye, Lucie Genestout, Matthieu Guichard, François Guillaume, Emmanuelle Labarthe, Rachid Mahla, Fanny Mondet, Markus, Neudischko, Florence Phocas, Yannick Poquet, Christina Sann, Rémi-Félix Serre, Kamila Tabet, Bertrand Servin \
-bioRxiv , doi: \
+This repository contains the scripts to perform the analysis described in the paper: "Sequence-based genome-wide association studies reveal the polygenic architecture of <i>Varroa destructor</i> resistance in Western honey bees <i>Apis mellifera</i>"\
+Sonia E Eynard, Fanny Mondet, Benjamin Basso, Olivier E Bouchez, Tabatha Bulach, Yves Le Conte, Benjamin Dainat, Axel Decourtye, Lucie Genestout, Matthieu Guichard, Francois Guillaume, Emmanuelle Labarthe, Barbara Locke, Rachid Mahla, Joachim R de Miranda, Markus Neuditschko, Florence Phocas, Yannick Poquet, Christina Sann, Remi-Felix Serre, Kamila Tabet, Alain Vignal, Bertrand Servin \
+bioRxiv , doi: https://doi.org/10.1101/2024.02.16.580755\
 
-Using pool sequence data we performed a genome wide association study for multiple traits linked to the infestation by <i>Varroa destructor</i> of the honeybee and its resistance (measured as behavioural response). The GWAS was first done for each trait, in each of the identified population. Thereafter, we performed metaGWAS, for each trait, across the populations using two different Bayesian methods: the transethnic meta-analysis method from MANTRA (Morris 2011, 10.1002/gepi.20630) and the statistical method mash (Urbut et al. 2019, 10.1038/s41588-018-0268-8). In addition, we looked into genes associated with the markers that were found significant, their function and how the variant change affected them using the Ensembl's tool Variant Effect Predictor (VEP). Finally, taking into account linkage disequilibrium within our populations and summary statistics from our GWAS we could identify genes significant for our traits, using the mBAT-combo tool from GCTA (Li et al. 2022, 10.1101/2022.06.27.497850).
+Using pool sequence data we performed a genome wide association study for multiple traits linked to the infestation by <i>Varroa destructor</i> of the honeybee and its resistance (measured as behavioural response). The GWAS was first done for each trait, in each of the identified population. Thereafter, we performed metaGWAS, for each trait, across the populations using two different Bayesian methods: the transethnic meta-analysis method from MANTRA (Morris 2011, https://doi.org/10.1002/gepi.20630) and the statistical method mash (Urbut et al. 2019, https://doi.org/10.1038/s41588-018-0268-8). In addition, we looked into genes associated with the markers that were found significant, their function and how the variant change affected them using the Ensembl's tool Variant Effect Predictor (VEP). 
 
-This analysis was performed using the latest genome version, AmelHAV3.1 (Wallberg et al. 2019, 10.1186/s12864-019-5642-0, GenBank accession number: GCA_003254395.2). Only SNPs that were previously identified with high confidence were used for the rest of the analysis. The list of these SNPs, and the associated vcfs 870 and 628 individuals, were made available by Wragg et al. (2022, 10.1111/1755-0998.13665). In addition, the data from Wragg et al. (2022, 10.1111/1755-0998.13665) were used to describe reference populations for the three predominant sub-species of Europe, <i>Apis mellifera mellifera</i>, <i>Apis mellifera ligustica & carnica</i> and <i>Apis mellifere caucasia</i>.
-A step of genotype reconstruction for the honeybee queen was performed following the protocol described in Eynard et al (2022, 10.1111/1755-0998.13685). The statistical models to estimate genetic composition and reconstruct queen genotype are available at the GitHub repository : https://github.com/BertrandServin/beethoven.
+This analysis was performed using the latest genome version, AmelHAV3.1 (Wallberg et al. 2019, https://doi.org/10.1186/s12864-019-5642-0, GenBank accession number: GCA_003254395.2). Only SNPs that were previously identified with high confidence were used for the rest of the analysis. The list of these SNPs, and the associated vcfs 870 and 628 individuals, were made available by Wragg et al. (2022, https://doi.org/10.1111/1755-0998.13665). In addition, the data from Wragg et al. (2022, https://doi.org/10.1111/1755-0998.13665) were used to describe reference populations for the three predominant sub-species of Europe, <i>Apis mellifera mellifera</i>, <i>Apis mellifera ligustica & carnica</i> and <i>Apis mellifere caucasia</i>.
+A step of genotype reconstruction for the honeybee queen was performed following the protocol described in Eynard et al (2022, https://doi.org/10.1111/1755-0998.13685). The statistical models to estimate genetic composition and reconstruct queen genotype are available at the GitHub repository : https://github.com/BertrandServin/beethoven.
 
 The pipeline described below is available in the script run.sh. All scripts called by this pipeline are available in this repository.
 
@@ -67,10 +65,10 @@ script="~/GWAS/scripts" # scripts
 dir_out="~/GWAS/results" # results
 dir_in="~/GWAS/data" # data
 dir_save="~/save" # save (containing data generally used and in storage)
-fasta=${dir_save}/Fasta/GCF_003254395.2_Amel_HAv3.1_genomic.fna # fasta file for the genome assembly used, in our case AmelHAV3.1 (Wallberg et al. 2019, 10.1186/s12864-019-5642-0)
-vcf_name="MetaGenotypesCalled870_raw_snps" # name of the vcf for high confidence SNPs described in Wragg et al. 2022 (10.1111/1755-0998.13665)
+fasta=${dir_save}/Fasta/GCF_003254395.2_Amel_HAv3.1_genomic.fna # fasta file for the genome assembly used, in our case AmelHAV3.1 (Wallberg et al. 2019,  https://doi.org/10.1186/s12864-019-5642-0)
+vcf_name="MetaGenotypesCalled870_raw_snps" # name of the vcf for high confidence SNPs described in Wragg et al. 2022 ( https://doi.org/10.1111/1755-0998.13665)
 vcf_sansfiltre=${dir_in}/${vcf_name}.vcf.gz # initial vcf, full, without filters
-vcf_file=${dir_in}/${vcf_name}_allfilter.vcf # final vcf, after filters, provided by Wragg et al. 2022 (10.1111/1755-0998.13665)
+vcf_file=${dir_in}/${vcf_name}_allfilter.vcf # final vcf, after filters, provided by Wragg et al. 2022 ( https://doi.org/10.1111/1755-0998.13665)
 pop_id="Mellifera,Caucasia,Ligustica_Carnica" # reference populations of interest for our study
 n_pop=$(echo $(IFS=","; set -f; set -- $pop_id; echo $#)) # nb of reference populations of interest
 ppop_id2="Mellifera,Caucasia,Ligustica_Carnica,hybrid" # populations on which the analysis is run
@@ -101,7 +99,7 @@ sbatch -W --mem=200G --job-name='prep_pileup' --wrap="${script}/prep_pileup.sh $
 ```
 
 ## 3. Genetic composition estimation and queen genotype reconstruction (script for the statistical models available at https://github.com/BertrandServin/beethoven)
-This step of our pipeline follows the procedure described in Eynard et al. (2022, 10.1111/1755-0998.13685)
+This step of our pipeline follows the procedure described in Eynard et al. (2022,  https://doi.org/10.1111/1755-0998.13685)
 ### 3.1. Estimation of genetic composition
 ```bash
 Ncol=$(awk "{print NF;exit}" ${dir_in}/depth.txt)
@@ -168,7 +166,7 @@ tail -n +2 ${dir_in}/allele_id_final.txt  > ${dir_in}/tmp && mv ${dir_in}/tmp ${
 ```
 
 ## 4. Phenotypes
-In this study we focused on multiple phenotypes linked to the infestation by varroa and the resistance behaviours expressed by the honeybee. Four phenotypes for varroa infestation were measured: the varroa infestation in the brood, on the adult honeybee (so called phoretic varroa), using the sequencing depth of varroa mitochondrial DNA in the pool as a proxy for its infestation on adult honeybee and a complete varroa load. After statistical analysis we observed that these phenotypes are highly correlated and all represent the first axis of the principal component on phenotypes, with about 60 % of the variance explained. We therefore decided to use the first axis of the PCA as a composite phenotype representing overall varroa infestation. The two other phenotypes are linked to 'resistance' mechanisms of the honeybee towards this infestation. Colonies were scored for mite non reproduction (MNR, described in Eynard et al. (2020, 10.3390/insects11080492) and Mondet et al. (2020, 10.3390/insects11090595)) and for recapping of infested brood cells. The phenotypes were adjusted to match a Normal distribution using Empiral Bayes method for MNR and logit transformation for the recapping.  
+In this study we focused on multiple phenotypes linked to the infestation by varroa and the resistance behaviours expressed by the honeybee. Four phenotypes for varroa infestation were measured: the varroa infestation in the brood, on the adult honeybee (so called phoretic varroa), using the sequencing depth of varroa mitochondrial DNA in the pool as a proxy for its infestation on adult honeybee and a complete varroa load. After statistical analysis we observed that these phenotypes are highly correlated and all represent the first axis of the principal component on phenotypes, with about 60 % of the variance explained. We therefore decided to use the first axis of the PCA as a composite phenotype representing overall varroa infestation. The two other phenotypes are linked to 'resistance' mechanisms of the honeybee towards this infestation. Colonies were scored for mite non reproduction (MNR, described in Eynard et al. (2020, https://doi.org/10.3390/insects11080492) and Mondet et al. (2020,  https://doi.org/10.3390/insects11090595)) and for recapping of infested brood cells. The phenotypes were adjusted to match a Normal distribution using Empiral Bayes method for MNR and logit transformation for the recapping.  
 ```bash
 sbatch -o ${dir}/log/prep_pheno.out  -e ${dir}/log/prep_pheno.err -W --wrap="Rscript ${script}/prep_pheno.r ${dir_in} ${dir_out} ${pheno} ${pop_id2} ${pheno_mito}"
 ```
@@ -242,7 +240,7 @@ list_pop=("${list_pop[@]/$delete}")
 ```
 
 ### 6.2. MANTRA
-Meta-GWAS performed across groups for each phenotypes using the MANTRA method described in Morris (2011, 10.1002/gepi.20630)
+Meta-GWAS performed across groups for each phenotypes using the MANTRA method described in Morris (2011,  https://doi.org/10.1002/gepi.20630)
 ```bash
 for i in ${pheno_list[@]}
 do
@@ -260,7 +258,7 @@ done
 ```
 
 ### 6.3. Mash
-Meta-GWAS performed across groups for each phenotypes using the mash method described in Urbut et al. (2019, 10.1038/s41588-018-0268-8)
+Meta-GWAS performed across groups for each phenotypes using the mash method described in Urbut et al. (2019,  https://doi.org/10.1038/s41588-018-0268-8)
 ```bash
 jobnum=()
 for i in ${pheno_list[@]}
@@ -279,7 +277,7 @@ done
 ```
 
 ## 7. Linkage disequilibrium
-Linkage disequilibrium is a crucial information when one wants to correlate significant markers for a specific trait and their underlying genes. Using genotype data from Wragg et al. (2022, 10.1111/1755-0998.13665) we estimated linkage disequilibrium between SNP across the 16 honeybee chromosomes for groups of similar genetic composition than our groups for GWAS ('pure' mellifera, 'pure' ligustica & carnica and hybrides).
+Linkage disequilibrium is a crucial information when one wants to correlate significant markers for a specific trait and their underlying genes. Using genotype data from Wragg et al. (2022,  https://doi.org/10.1111/1755-0998.13665) we estimated linkage disequilibrium between SNP across the 16 honeybee chromosomes for groups of similar genetic composition than our groups for GWAS ('pure' mellifera, 'pure' ligustica & carnica and hybrides).
 ```bash
 mkdir ${dir_in}/ld
 sbatch -J 'list_ld' --mem=20G -W --wrap="Rscript ${script}/list_ld.r ${dir_in}/seqapipop ${dir_in}/ld ${pop_id2} ${compo_threshold}"
@@ -336,55 +334,6 @@ cd ${dir}/ensembl-vep/
 ./vep -i input_vep.txt -o output_vep.txt --species apis_mellifera --database --genomes --force_overwrite
 cd
 cp ${dir}/ensembl-vep/output_vep.txt ${dir_out}/output_vep.txt
-```
-
-### 8.2. Statistical analysis on genes
-Finally, using information on linkage disequilibrium and summary statistics from GWAS analysis we identified genes significant for our traits of interest using the mBAT-combo method, available in GCTA suite (Li et al. 2022, 10.1101/2022.06.27.497850)
-```bash
-awk -F',' '{print $1" "$2" "$3" "$6}' ${dir_in}/proteins_48_403979.csv > ${dir_in}/gene_list.txt
-sed -i -e 's/"linkage group LG1"/1/g' ${dir_in}/gene_list.txt
-sed -i -e 's/"linkage group LG2"/2/g' ${dir_in}/gene_list.txt
-sed -i -e 's/"linkage group LG3"/3/g' ${dir_in}/gene_list.txt
-sed -i -e 's/"linkage group LG4"/4/g' ${dir_in}/gene_list.txt
-sed -i -e 's/"linkage group LG5"/5/g' ${dir_in}/gene_list.txt
-sed -i -e 's/"linkage group LG6"/6/g' ${dir_in}/gene_list.txt
-sed -i -e 's/"linkage group LG7"/7/g' ${dir_in}/gene_list.txt
-sed -i -e 's/"linkage group LG8"/8/g' ${dir_in}/gene_list.txt
-sed -i -e 's/"linkage group LG9"/9/g' ${dir_in}/gene_list.txt
-sed -i -e 's/"linkage group LG10"/10/g' ${dir_in}/gene_list.txt
-sed -i -e 's/"linkage group LG11"/11/g' ${dir_in}/gene_list.txt
-sed -i -e 's/"linkage group LG12"/12/g' ${dir_in}/gene_list.txt
-sed -i -e 's/"linkage group LG13"/13/g' ${dir_in}/gene_list.txt
-sed -i -e 's/"linkage group LG14"/14/g' ${dir_in}/gene_list.txt
-sed -i -e 's/"linkage group LG15"/15/g' ${dir_in}/gene_list.txt
-sed -i -e 's/"linkage group LG16"/16/g' ${dir_in}/gene_list.txt
-sed -i -e 's/"Un"/-9/g' ${dir_in}/gene_list.txt
-sed -i -e 's/"mitochondrion MT"/-9/g' ${dir_in}/gene_list.txt
-sed -i -e 's/"//g' ${dir_in}/gene_list.txt
-awk '!seen[$0]++' ${dir_in}/gene_list.txt > ${dir_in}/tmp_gene_list && mv ${dir_in}/tmp_gene_list ${dir_in}/gene_list.txt
-sed -i '/^-9/d' ${dir_in}/gene_list.txt
-
-jobnum=()
-for i in ${list_pop[@]}
-do
-	echo ${i}
-	for j in ${pheno_list[@]}
-		echo ${j}
-		n=$(grep 'number of analyzed individuals' ${dir_out}/gemma_${i}_${j}_freq_lmm_egs_cov.log.txt | cut -d '=' -f2)
-		awk -v var="${n}" '{print $2" "$5" "$6" "$7" "$8" "$9" "$12" "var}' ${dir_out}/gemma_${i}_${j}_freq_lmm_egs_cov.assoc.txt > ${dir_out}/${j}_in_${i}.ma
-		var="SNP A1 A2 freq BETA SE P N"
-		sed -i "1s/.*/$var/" ${dir_out}/${j}_in_${i}.ma
-		job=`sbatch --mem=8G --wrap="./gcta-1.94.1 --bfile ${i} --mBAT-combo ${dir_out}/${j}_in_${i}.ma --mBAT-gene-list ${dir_in}/gene_list.txt --out ${dir_out}/${j}_in_${i} --thread-num 1 --diff-freq 1 --mBAT-wind 5 --fastBAT-ld-cutoff 0.8 --mBAT-print-all-p"`
-		jobnum+=(${job})
-	done
-done
-pat=$(echo ${jobnum[@]}|tr " " "|")
-x=$(squeue -u seynard | grep -Eow "$pat" |wc -l)
-while [ ${x} -gt 1 ]
-do
-	sleep 30m
-	x=$(squeue -u seynard | grep -Eow "$pat" |wc -l)
-done
 ```
 
 All the results of these different analysis were combined and discussed to underline the genetic mechanisms involved in varroa infestation and resistance to such infestation in a heterogeneous honeybee population. Difference between the different genetic groups were also highlighted and discuss to provide guidance for further potential development in the selection for resistant bees.
